@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   post '/signin' => 'sessions#create'
   get '/signout' => 'sessions#destroy'
 
-  resources :spots
+  resources :spots do
+    get 'add_image', :on => :member
+    post 'add_image', :on => :member
+  end
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 end

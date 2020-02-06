@@ -1,9 +1,10 @@
 require 'pry'
-
+require 'base64'
+require 'zlib'
 # NEED TO FIX UPDATE AND CREATE ROUTES! CURRENTLY DOES NOT WORK WITH API. SOMETHING WEIRD WITH PARAMS NOT BEING COLLECTED
 
 class SpotsController < ApplicationController
-  before_action :set_spot, only: [:show, :edit, :update, :destroy]
+  before_action :set_spot, only: [:show, :edit, :update, :destroy, :add_image]
   before_action :authorize, only: [:index, :show, :edit, :create, :update, :destroy, :new]
   before_action :get_spots
 
@@ -24,6 +25,11 @@ class SpotsController < ApplicationController
         @reviews.push(review)
         puts 'review pushed'
       end
+    end
+    if (@spot.img.length > 10)
+      img = Zlib::Inflate.inflate(@spot.img)
+      binding.pry
+      img = Base64.decode64(img)
     end
     @response = HTTParty.get("https://api.openweathermap.org/data/2.5/weather?lat=#{@spot.lat}&lon=#{@spot.lon}&appid=#{Rails.application.credentials.weather_api_key}")
   end
@@ -60,10 +66,16 @@ class SpotsController < ApplicationController
   # PATCH/PUT /spots/1.json
   def update
     respond_to do |format|
-      # spot = HTTParty.get("http://localhost:3000/spots/#{params[:id]}" )
       if @spot.update(spot_params)
-        HTTParty.patch("http://localhost:3000/spots/#{params[:id]}?name=#{spot_params[:name]}&lat=#{spot_params[:lat]}&lon=#{spot_params[:lon]}&description=#{spot_params[:description]}&features=#{spot_params[:features]}&spot_type=#{spot_params[:spot_type]}&img=#{spot_params[:img]}")
-        @spot.spot_photos.attach(params[:spot][:spot_photos])
+        if (params[:spot].has_key?(:img))
+          path = params[:spot][:img].tempfile.path
+          file = File.open(path)
+          encoded_img = Base64.encode64(file.read)
+          encoded_img = Zlib::Deflate.deflate(encoded_img)
+          HTTParty.patch("http://localhost:3000/spots/#{params[:id]}?name=#{spot_params[:name]}&lat=#{spot_params[:lat]}&lon=#{spot_params[:lon]}&description=#{spot_params[:description]}&features=#{spot_params[:features]}&spot_type=#{spot_params[:spot_type]}&img=#{encoded_img}")
+        else
+          HTTParty.patch("http://localhost:3000/spots/#{params[:id]}?name=#{spot_params[:name]}&lat=#{spot_params[:lat]}&lon=#{spot_params[:lon]}&description=#{spot_params[:description]}&features=#{spot_params[:features]}&spot_type=#{spot_params[:spot_type]}&img=#{spot_params[:img]}")
+        end
         format.html { redirect_to @spot, notice: 'Spot was successfully updated.' }
         format.json { render :show, status: :ok, location: @spot }
       else
@@ -92,7 +104,8 @@ class SpotsController < ApplicationController
 
   # Never trust parameters from the scary internet, only allow the white list through.
   def spot_params
-    params.require(:spot).permit(:name, :lat, :lon, :spot_type, :features, :img, :description, spot_photos: [])
+    params.require(:spot).permit(:name, :lat, :lon, :spot_type, :features, :img, :description, :spot_photos)
+    # params.require(:spot).permit(:name, :lat, :lon, :spot_type, :features, :img, :description, spot_photos: [])
   end
 
   def get_spots

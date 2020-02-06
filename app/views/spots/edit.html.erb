@@ -3,6 +3,7 @@
 
 <%= render 'form', spot: @spot %>
 
+
 <%= link_to 'Show', @spot %> |
 <%= link_to 'Back', spots_path %>
-
+<a href="/spots/<%= @spot.id %>/add_image">Add image</a>

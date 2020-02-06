@@ -31,15 +31,16 @@
 </div>
 
 <div class="field">
+  <%= form.label :img %>
+  <%= form.file_field :img %>
+</div>
+
+<div class="field">
   <%= form.label :lon %>
   <%= form.text_field :lon %>
 </div>
 
 <div class="field">
-  <%= form.label :spot_photos %>
-  <%= form.file_field :spot_photos %>
-</div>
-
   <%= form.label :spot_type %>
   <%= form.text_field :spot_type %>
 </div>

@@ -1,0 +1,7 @@
+<h2>Add image to <%= @spot.name %></h2>
+
+
+<form enctype="multipart/form-data" action="<%= add_image_spot_path %>" method="upload_image">
+  <input id="spot_photos" type="file" name="spot_photos">
+  <button type="submit" name="button">Go</button>
+</form>
